@@ -1,0 +1,17 @@
+<div class="lg-link-picker">
+    <div class="lg-search-row">
+        <input type="text" class="lg-search-input" placeholder="Search entries..." autofocus />
+        <small class="lg-search-count"></small>
+    </div>
+    <div class="lg-entry-list">
+        {{#each entries}}
+        <label class="lg-entry-option" data-lg-search="{{comment}} {{uid}}">
+            <input type="radio" name="lg_target" value="{{uid}}" />
+            <span class="lg-entry-label">
+                <b>{{comment}}</b>
+                <small class="lg-entry-uid">UID: {{uid}}</small>
+            </span>
+        </label>
+        {{/each}}
+    </div>
+</div>

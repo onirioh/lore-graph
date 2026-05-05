@@ -1,0 +1,104 @@
+/* Create Link button in the editor */
+.lg-create-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    padding: 3px 10px;
+    font-size: 12px;
+}
+
+.lg-create-link i {
+    font-size: 11px;
+}
+
+/* Link picker popup */
+.lg-link-picker {
+    min-width: 360px;
+    max-width: 500px;
+}
+
+.lg-search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    position: sticky;
+    top: 0;
+    background: var(--SmartThemeBlurTintColor, #1a1a1a);
+    padding: 4px 0;
+    z-index: 1;
+}
+
+.lg-search-input {
+    flex: 1;
+    padding: 4px 8px;
+    font-size: 13px;
+    background: var(--inputBackground, #222);
+    border: 1px solid var(--SmartThemeBorderColor, #444);
+    border-radius: 4px;
+    color: var(--SmartThemeBodyColor, #ddd);
+}
+
+.lg-search-input:focus {
+    outline: none;
+    border-color: var(--SmartThemeEmColor, #888);
+}
+
+.lg-search-count {
+    color: var(--SmartThemeEmColor, #888);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.lg-entry-list {
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+.lg-entry-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #333);
+    transition: background 0.15s;
+}
+
+.lg-entry-option:hover {
+    background: var(--SmartThemeBlurTintColor, rgba(255, 255, 255, 0.05));
+}
+
+.lg-entry-option[hidden] {
+  display: none;
+}
+
+.lg-entry-option input[type="radio"] {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.lg-entry-label {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.lg-entry-uid {
+    color: var(--SmartThemeEmColor, #888);
+    font-size: 11px;
+}
+
+/* Settings panel */
+.lore-graph-settings .inline-drawer-content label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+    cursor: pointer;
+}
+
+.lore-graph-settings .inline-drawer-content label input[type="checkbox"] {
+    margin: 0;
+}

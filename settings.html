@@ -1,0 +1,26 @@
+<div class="lore-graph-settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b data-i18n="Lore Graph">Lore Graph</b>
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <label class="checkbox_label" for="lg_tool_enabled">
+                <input id="lg_tool_enabled" type="checkbox" {{#if toolEnabled}}checked{{/if}} />
+                <span>Enable lookup_lore function tool</span>
+            </label>
+            <label class="checkbox_label" for="lg_cross_book">
+                <input id="lg_cross_book" type="checkbox" {{#if crossBookLookup}}checked{{/if}} />
+                <span>Search across all active lorebooks</span>
+            </label>
+            <label class="checkbox_label" for="lg_strip_links">
+                <input id="lg_strip_links" type="checkbox" {{#if stripLinksFromPrompt}}checked{{/if}} />
+                <span>Strip link markup in prompts (show only text)</span>
+            </label>
+            <label class="checkbox_label" for="lg_stealth">
+                <input id="lg_stealth" type="checkbox" {{#if stealth}}checked{{/if}} />
+                <span>Hide tool call results from chat</span>
+            </label>
+        </div>
+    </div>
+</div>

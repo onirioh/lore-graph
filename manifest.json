@@ -1,0 +1,17 @@
+{
+    "display_name": "Lore Graph",
+    "loading_order": 1,
+    "requires": [],
+    "optional": [],
+    "js": "dist/index.js",
+    "css": "",
+    "author": "Helius Universe",
+    "version": "1.0.0",
+    "homePage": "https://github.com/SillyTavern/Extension-LoreGraph",
+    "auto_update": false,
+    "hooks": {
+        "activate": "onActivate",
+        "enable": "onEnable",
+        "disable": "onDisable"
+    }
+}
