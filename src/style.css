@@ -1,3 +1,19 @@
+/* Export Clean button in the toolbar */
+.lg-export-clean {
+    position: relative;
+}
+
+.lg-export-clean::after {
+    content: 'txt';
+    position: absolute;
+    bottom: 0;
+    right: 1px;
+    font-size: 7px;
+    font-weight: 700;
+    font-family: var(--mainFont, sans-serif);
+    color: var(--SmartThemeEmColor, #888);
+}
+
 /* Create Link button in the editor */
 .lg-create-link {
     display: inline-flex;

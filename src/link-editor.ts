@@ -1,4 +1,4 @@
-import { SELECTORS } from './constants';
+import { SELECTORS, LINK_PATTERN } from './constants';
 
 let observer: MutationObserver | null = null;
 
@@ -31,6 +31,7 @@ export function initLinkEditorObserver(): void {
 
     // Initial injection
     injectLinkButtons();
+    injectExportCleanButton();
 }
 
 /**
@@ -41,6 +42,64 @@ export function destroyObserver(): void {
         observer.disconnect();
         observer = null;
     }
+}
+
+/**
+ * Inject the "Export Clean" button next to the existing Export button.
+ * Strips all [text](ID:n) links from entry content before exporting.
+ */
+export function injectExportCleanButton(): void {
+    const exportBtn = document.querySelector('#world_popup_export');
+    if (!exportBtn) return;
+
+    // Don't double-inject
+    if (exportBtn.nextElementSibling?.classList.contains('lg-export-clean')) return;
+
+    const button = document.createElement('div');
+    button.className = 'menu_button fa-solid fa-file-export lg-export-clean';
+    button.title = 'Export World Info without links (text only)';
+
+    exportBtn.insertAdjacentElement('afterend', button);
+
+    button.addEventListener('click', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { loadWorldInfo } = (globalThis as any).SillyTavern.getContext();
+
+        const name = getCurrentLorebookName();
+        if (!name) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (globalThis as any).toastr?.error?.('No lorebook open in editor.');
+            return;
+        }
+
+        const data = await loadWorldInfo(name);
+        if (!data?.entries) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (globalThis as any).toastr?.error?.('Could not load lorebook data.');
+            return;
+        }
+
+        // Deep clone and strip links from all entries
+        const clean = structuredClone(data);
+        for (const entry of Object.values(clean.entries) as Array<{ content?: string }>) {
+            if (entry.content) {
+                LINK_PATTERN.lastIndex = 0;
+                entry.content = entry.content.replace(
+                    LINK_PATTERN,
+                    (_, text: string) => text,
+                );
+            }
+        }
+
+        const jsonValue = JSON.stringify(clean, null, 2);
+        const fileName = `${name}_clean.json`;
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error webpackIgnore runtime import
+        const { download } = await import(/* webpackIgnore: true */ '/scripts/utils.js');
+        download(jsonValue, fileName, 'application/json');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (globalThis as any).toastr?.success?.(`Exported ${fileName}`);
+    });
 }
 
 /**
@@ -78,6 +137,8 @@ export function injectLinkButtons(): void {
 
         button.addEventListener('click', () => handleCreateLink(textarea));
     });
+
+    injectExportCleanButton();
 }
 
 /**
