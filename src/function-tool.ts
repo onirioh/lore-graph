@@ -108,7 +108,7 @@ function registerSearchTool(): void {
                     type: 'array',
                     items: { type: 'string' },
                     description:
-                        'Search terms to look up in lore entry titles and keywords, e.g. ["Eldric", "Fire Magic"]',
+                        'Search terms to look up in lore entry titles and keywords, e.g. ["John", "Middle Earth"]',
                 },
             },
             required: ['terms'],

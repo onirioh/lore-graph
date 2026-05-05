@@ -232,10 +232,10 @@ export async function searchEntriesByTerms(
                 if (!entry || seenUids.has(`${world}:${entry.uid}`)) continue;
 
                 const comment = (entry.comment || '').toLowerCase();
-                const keys = (entry.key || []).join(' ').toLowerCase();
-                const searchText = `${comment} ${keys}`;
 
-                if (lowerTerms.some(term => searchText.includes(term))) {
+                if (lowerTerms.some(term =>
+                    comment === term || entry.key.some(k => k.toLowerCase() === term),
+                )) {
                     seenUids.add(`${world}:${entry.uid}`);
                     results.push({
                         uid: entry.uid,
