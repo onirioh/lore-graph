@@ -187,3 +187,70 @@ export async function findEntriesByUids(
     }
     return results;
 }
+
+/**
+ * An entry returned by term-based search, including the lorebook name.
+ */
+export interface SearchResult extends LookupResult {
+    world: string;
+    comment: string;
+    keys: string[];
+}
+
+/**
+ * Search active lorebooks for entries whose comment (title) or activation
+ * keys match any of the given search terms (case-insensitive substring match).
+ */
+export async function searchEntriesByTerms(
+    terms: string[],
+    crossBook: boolean,
+): Promise<SearchResult[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ctx = (globalThis as any).SillyTavern.getContext();
+    const loadWorldInfo: (name: string) => Promise<{
+        entries: Record<number, { uid: number; comment: string; content: string; key: string[] }>;
+    } | undefined> = ctx.loadWorldInfo;
+
+    if (!loadWorldInfo) return [];
+
+    const bookNames = crossBook
+        ? await getActiveLorebookNames()
+        : [];
+
+    if (bookNames.length === 0) return [];
+
+    const lowerTerms = terms.map(t => t.toLowerCase());
+    const results: SearchResult[] = [];
+    const seenUids = new Set<string>();
+
+    for (const world of bookNames) {
+        try {
+            const data = await loadWorldInfo(world);
+            if (!data?.entries) continue;
+
+            for (const entry of Object.values(data.entries)) {
+                if (!entry || seenUids.has(`${world}:${entry.uid}`)) continue;
+
+                const comment = (entry.comment || '').toLowerCase();
+                const keys = (entry.key || []).join(' ').toLowerCase();
+                const searchText = `${comment} ${keys}`;
+
+                if (lowerTerms.some(term => searchText.includes(term))) {
+                    seenUids.add(`${world}:${entry.uid}`);
+                    results.push({
+                        uid: entry.uid,
+                        world,
+                        title: entry.comment || '',
+                        content: entry.content || '',
+                        comment: entry.comment || '',
+                        keys: entry.key || [],
+                    });
+                }
+            }
+        } catch {
+            // Skip books that fail to load
+        }
+    }
+
+    return results;
+}

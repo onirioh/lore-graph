@@ -1,8 +1,11 @@
 export interface LoreGraphSettings {
     toolEnabled: boolean;
+    searchToolEnabled: boolean;
     stealth: boolean;
     stripLinksFromPrompt: boolean;
     crossBookLookup: boolean;
+    lookupToolDescription: string;
+    searchToolDescription: string;
 }
 
 export interface LinkMatch {

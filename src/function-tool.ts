@@ -1,11 +1,13 @@
-import { TOOL_NAME } from './constants';
+import { TOOL_NAME, SEARCH_TOOL_NAME } from './constants';
 import { getSettings } from './settings';
-import { findEntriesByUids } from './link-parser';
+import { findEntriesByUids, searchEntriesByTerms } from './link-parser';
 import { type LookupResult } from './types';
+import { type SearchResult } from './link-parser';
 
-let isRegistered = false;
+let lookupRegistered = false;
+let searchRegistered = false;
 
-function formatResults(results: LookupResult[]): string {
+function formatLookupResults(results: LookupResult[]): string {
     if (results.length === 0) {
         return 'No lore entries found for the provided IDs.';
     }
@@ -17,14 +19,27 @@ function formatResults(results: LookupResult[]): string {
         .join('\n\n===\n\n');
 }
 
-export function registerTool(): void {
+function formatSearchResults(results: SearchResult[]): string {
+    if (results.length === 0) {
+        return 'No lore entries found matching the given terms.';
+    }
+    return results
+        .map(r => {
+            const label = r.title
+                ? `${r.title} (UID: ${r.uid}, in "${r.world}")`
+                : `UID: ${r.uid} (in "${r.world}")`;
+            return `${label}\n---\n${r.content}`;
+        })
+        .join('\n\n===\n\n');
+}
+
+function registerLookupTool(): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ctx = (globalThis as any).SillyTavern.getContext();
 
-    // Unregister first for idempotency
-    if (isRegistered) {
+    if (lookupRegistered) {
         ctx.unregisterFunctionTool(TOOL_NAME);
-        isRegistered = false;
+        lookupRegistered = false;
     }
 
     const settings = getSettings();
@@ -33,14 +48,7 @@ export function registerTool(): void {
     ctx.registerFunctionTool({
         name: TOOL_NAME,
         displayName: 'Look Up Lore',
-        description: [
-            'Look up additional lore information by numeric ID.',
-            'When you see text in lore or world info that contains references like [Name](ID:123),',
-            'call this tool with the numeric ID(s) to retrieve the complete entry content.',
-            'You can pass multiple IDs at once (e.g., [1, 5, 12]) to look up several entries.',
-            'Use this when more details about a referenced person, place, item, or concept would',
-            'improve your response.',
-        ].join(' '),
+        description: settings.lookupToolDescription,
         parameters: Object.freeze({
             $schema: 'http://json-schema.org/draft-04/schema#',
             type: 'object',
@@ -59,8 +67,8 @@ export function registerTool(): void {
                 return 'Error: No IDs provided. Please provide an array of numeric IDs.';
             }
 
-            const results = await findEntriesByUids(ids, settings.crossBookLookup);
-            return formatResults(results);
+            const results = await findEntriesByUids(ids, getSettings().crossBookLookup);
+            return formatLookupResults(results);
         },
         formatMessage: ({ ids }: { ids?: number[] }) => {
             const count = Array.isArray(ids) ? ids.length : 1;
@@ -72,14 +80,89 @@ export function registerTool(): void {
         },
     });
 
-    isRegistered = true;
-    console.log('[LoreGraph] Function tool registered');
+    lookupRegistered = true;
+    console.log('[LoreGraph] lookup_lore tool registered');
 }
 
-export function unregisterTool(): void {
+function registerSearchTool(): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ctx = (globalThis as any).SillyTavern.getContext();
+
+    if (searchRegistered) {
+        ctx.unregisterFunctionTool(SEARCH_TOOL_NAME);
+        searchRegistered = false;
+    }
+
+    const settings = getSettings();
+    if (!settings.searchToolEnabled) return;
+
+    ctx.registerFunctionTool({
+        name: SEARCH_TOOL_NAME,
+        displayName: 'Search Lore',
+        description: settings.searchToolDescription,
+        parameters: Object.freeze({
+            $schema: 'http://json-schema.org/draft-04/schema#',
+            type: 'object',
+            properties: {
+                terms: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description:
+                        'Search terms to look up in lore entry titles and keywords, e.g. ["Eldric", "Fire Magic"]',
+                },
+            },
+            required: ['terms'],
+        }),
+        action: async (args: { terms?: string[] }) => {
+            const terms = args?.terms;
+            if (!Array.isArray(terms) || terms.length === 0) {
+                return 'Error: No search terms provided. Please provide an array of strings.';
+            }
+
+            const results = await searchEntriesByTerms(terms, getSettings().crossBookLookup);
+            return formatSearchResults(results);
+        },
+        formatMessage: ({ terms }: { terms?: string[] }) => {
+            const count = Array.isArray(terms) ? terms.length : 0;
+            return `Searching lore for ${count} term${count === 1 ? '' : 's'}...`;
+        },
+        shouldRegister: () => getSettings().searchToolEnabled,
+        get stealth() {
+            return getSettings().stealth;
+        },
+    });
+
+    searchRegistered = true;
+    console.log('[LoreGraph] search_lore tool registered');
+}
+
+/**
+ * Register both lookup_lore and search_lore function tools.
+ */
+export function registerTools(): void {
+    registerLookupTool();
+    registerSearchTool();
+}
+
+/** @deprecated Use registerTools() instead. */
+export function registerTool(): void {
+    registerLookupTool();
+}
+
+/**
+ * Unregister both function tools.
+ */
+export function unregisterTools(): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ctx = (globalThis as any).SillyTavern.getContext();
     ctx.unregisterFunctionTool(TOOL_NAME);
-    isRegistered = false;
-    console.log('[LoreGraph] Function tool unregistered');
+    ctx.unregisterFunctionTool(SEARCH_TOOL_NAME);
+    lookupRegistered = false;
+    searchRegistered = false;
+    console.log('[LoreGraph] Function tools unregistered');
+}
+
+/** @deprecated Use unregisterTools() instead. */
+export function unregisterTool(): void {
+    unregisterTools();
 }

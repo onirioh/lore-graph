@@ -1,5 +1,5 @@
 import { type LoreGraphSettings } from './types';
-import { MODULE_NAME, DEFAULT_SETTINGS, SELECTORS, TOOL_NAME } from './constants';
+import { MODULE_NAME, DEFAULT_SETTINGS, SELECTORS, TOOL_NAME, SEARCH_TOOL_NAME } from './constants';
 
 let settings: LoreGraphSettings = { ...DEFAULT_SETTINGS };
 
@@ -37,9 +37,12 @@ export async function renderSettingsPanel(): Promise<void> {
         'settings',
         {
             toolEnabled: settings.toolEnabled,
+            searchToolEnabled: settings.searchToolEnabled,
             crossBookLookup: settings.crossBookLookup,
             stripLinksFromPrompt: settings.stripLinksFromPrompt,
             stealth: settings.stealth,
+            lookupToolDescription: settings.lookupToolDescription,
+            searchToolDescription: settings.searchToolDescription,
         },
     );
 
@@ -53,27 +56,37 @@ export async function renderSettingsPanel(): Promise<void> {
     bindSettingsUI();
 }
 
+function reregisterTools(): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { unregisterFunctionTool } = (globalThis as any).SillyTavern.getContext();
+    unregisterFunctionTool(TOOL_NAME);
+    unregisterFunctionTool(SEARCH_TOOL_NAME);
+    import('./function-tool').then(m => m.registerTools());
+}
+
 function bindSettingsUI(): void {
     const toolCheckbox = document.getElementById('lg_tool_enabled') as HTMLInputElement | null;
+    const searchToolCheckbox = document.getElementById('lg_search_tool_enabled') as HTMLInputElement | null;
     const crossBookCheckbox = document.getElementById('lg_cross_book') as HTMLInputElement | null;
     const stripLinksCheckbox = document.getElementById('lg_strip_links') as HTMLInputElement | null;
     const stealthCheckbox = document.getElementById('lg_stealth') as HTMLInputElement | null;
 
+    const lookupDescTextarea = document.getElementById('lg_lookup_description') as HTMLTextAreaElement | null;
+    const searchDescTextarea = document.getElementById('lg_search_description') as HTMLTextAreaElement | null;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { registerFunctionTool, unregisterFunctionTool } = (globalThis as any).SillyTavern.getContext();
+    const { unregisterFunctionTool } = (globalThis as any).SillyTavern.getContext();
 
     toolCheckbox?.addEventListener('change', () => {
         settings.toolEnabled = toolCheckbox.checked;
         saveSettings();
-        // Re-register the tool with updated settings
-        if (settings.toolEnabled) {
-            // Will be handled by re-registering in function-tool.ts via shouldRegister
-            unregisterFunctionTool(TOOL_NAME);
-            // Dynamic import to trigger re-registration
-            import('./function-tool').then(m => m.registerTool());
-        } else {
-            unregisterFunctionTool(TOOL_NAME);
-        }
+        reregisterTools();
+    });
+
+    searchToolCheckbox?.addEventListener('change', () => {
+        settings.searchToolEnabled = searchToolCheckbox.checked;
+        saveSettings();
+        reregisterTools();
     });
 
     crossBookCheckbox?.addEventListener('change', () => {
@@ -89,8 +102,34 @@ function bindSettingsUI(): void {
     stealthCheckbox?.addEventListener('change', () => {
         settings.stealth = stealthCheckbox.checked;
         saveSettings();
-        // Re-register tool to pick up stealth change
-        unregisterFunctionTool(TOOL_NAME);
-        import('./function-tool').then(m => m.registerTool());
+        reregisterTools();
+    });
+
+    lookupDescTextarea?.addEventListener('change', () => {
+        settings.lookupToolDescription = lookupDescTextarea.value;
+        saveSettings();
+        reregisterTools();
+    });
+
+    searchDescTextarea?.addEventListener('change', () => {
+        settings.searchToolDescription = searchDescTextarea.value;
+        saveSettings();
+        reregisterTools();
+    });
+
+    // Revert buttons
+    document.querySelectorAll<HTMLButtonElement>('.lg-revert-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.dataset.lgRevert;
+            if (target === 'lookup') {
+                settings.lookupToolDescription = DEFAULT_SETTINGS.lookupToolDescription;
+                if (lookupDescTextarea) lookupDescTextarea.value = settings.lookupToolDescription;
+            } else if (target === 'search') {
+                settings.searchToolDescription = DEFAULT_SETTINGS.searchToolDescription;
+                if (searchDescTextarea) searchDescTextarea.value = settings.searchToolDescription;
+            }
+            saveSettings();
+            reregisterTools();
+        });
     });
 }

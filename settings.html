@@ -9,6 +9,24 @@
                 <input id="lg_tool_enabled" type="checkbox" {{#if toolEnabled}}checked{{/if}} />
                 <span>Enable lookup_lore function tool</span>
             </label>
+            <div class="lg-description-block">
+                <textarea id="lg_lookup_description" rows="3">{{lookupToolDescription}}</textarea>
+                <button type="button" class="menu_button lg-revert-btn" data-lg-revert="lookup">
+                    Revert to default
+                </button>
+            </div>
+
+            <label class="checkbox_label" for="lg_search_tool_enabled">
+                <input id="lg_search_tool_enabled" type="checkbox" {{#if searchToolEnabled}}checked{{/if}} />
+                <span>Enable search_lore function tool</span>
+            </label>
+            <div class="lg-description-block">
+                <textarea id="lg_search_description" rows="3">{{searchToolDescription}}</textarea>
+                <button type="button" class="menu_button lg-revert-btn" data-lg-revert="search">
+                    Revert to default
+                </button>
+            </div>
+
             <label class="checkbox_label" for="lg_cross_book">
                 <input id="lg_cross_book" type="checkbox" {{#if crossBookLookup}}checked{{/if}} />
                 <span>Search across all active lorebooks</span>

@@ -102,3 +102,33 @@
 .lore-graph-settings .inline-drawer-content label input[type="checkbox"] {
     margin: 0;
 }
+
+.lg-description-block {
+    margin: 2px 0 12px 0;
+    padding-left: 8px;
+    border-left: 2px solid var(--SmartThemeBorderColor, #333);
+}
+
+.lg-description-block textarea {
+    display: block;
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-family: inherit;
+    background: var(--inputBackground, #222);
+    border: 1px solid var(--SmartThemeBorderColor, #444);
+    border-radius: 4px;
+    color: var(--SmartThemeBodyColor, #ddd);
+    resize: vertical;
+}
+
+.lg-description-block textarea:focus {
+    outline: none;
+    border-color: var(--SmartThemeEmColor, #888);
+}
+
+.lg-revert-btn {
+    margin-top: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+}

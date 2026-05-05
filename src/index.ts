@@ -1,7 +1,7 @@
 import './style.css';
 import { MODULE_NAME } from './constants';
 import { loadSettings, getSettings, renderSettingsPanel } from './settings';
-import { registerTool, unregisterTool } from './function-tool';
+import { registerTools, unregisterTools } from './function-tool';
 import { initLinkEditorObserver, destroyObserver, injectLinkButtons } from './link-editor';
 
 let initialized = false;
@@ -24,7 +24,7 @@ async function init(): Promise<void> {
 
     // 3. Register the function tool
     try {
-        registerTool();
+        registerTools();
     } catch (e) {
         console.warn(`[${MODULE_NAME}] Could not register function tool`, e);
     }
@@ -46,7 +46,7 @@ async function init(): Promise<void> {
         });
         ctx.eventSource.on(ctx.event_types.SETTINGS_UPDATED, () => {
             loadSettings();
-            registerTool();
+            registerTools();
         });
     }
 
@@ -66,7 +66,7 @@ export async function onActivate(): Promise<void> {
  */
 export function onEnable(): void {
     loadSettings();
-    registerTool();
+    registerTools();
     if (getSettings().toolEnabled) {
         initLinkEditorObserver();
     }
@@ -77,7 +77,7 @@ export function onEnable(): void {
  * Called when the extension is disabled by the user.
  */
 export function onDisable(): void {
-    unregisterTool();
+    unregisterTools();
     destroyObserver();
     console.log(`[${MODULE_NAME}] Extension disabled`);
 }
