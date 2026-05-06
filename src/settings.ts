@@ -36,7 +36,7 @@ export async function renderSettingsPanel(): Promise<void> {
         'lore-graph',
         'settings',
         {
-            disableExtension: settings.disableExtension,
+            enableExtension: settings.enableExtension,
             hardcoreMode: settings.hardcoreMode,
             toolEnabled: settings.toolEnabled,
             searchToolEnabled: settings.searchToolEnabled,
@@ -67,7 +67,7 @@ function reregisterTools(): void {
 }
 
 function syncExtensionState(): void {
-    if (settings.disableExtension) {
+    if (!settings.enableExtension) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { unregisterFunctionTool } = (globalThis as any).SillyTavern.getContext();
         unregisterFunctionTool(TOOL_NAME);
@@ -80,7 +80,7 @@ function syncExtensionState(): void {
 }
 
 function bindSettingsUI(): void {
-    const disableCheckbox = document.getElementById('lg_disable_extension') as HTMLInputElement | null;
+    const disableCheckbox = document.getElementById('lg_enable_extension') as HTMLInputElement | null;
     const hardcoreCheckbox = document.getElementById('lg_hardcore_mode') as HTMLInputElement | null;
     const toolCheckbox = document.getElementById('lg_tool_enabled') as HTMLInputElement | null;
     const searchToolCheckbox = document.getElementById('lg_search_tool_enabled') as HTMLInputElement | null;
@@ -92,7 +92,7 @@ function bindSettingsUI(): void {
     const searchDescTextarea = document.getElementById('lg_search_description') as HTMLTextAreaElement | null;
 
     disableCheckbox?.addEventListener('change', () => {
-        settings.disableExtension = disableCheckbox.checked;
+        settings.enableExtension = disableCheckbox.checked;
         saveSettings();
         syncExtensionState();
     });

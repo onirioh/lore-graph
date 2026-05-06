@@ -1,5 +1,5 @@
 export interface LoreGraphSettings {
-    disableExtension: boolean;
+    enableExtension: boolean;
     hardcoreMode: boolean;
     toolEnabled: boolean;
     searchToolEnabled: boolean;

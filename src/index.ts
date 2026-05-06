@@ -3,6 +3,7 @@ import { MODULE_NAME } from './constants';
 import { loadSettings, getSettings, renderSettingsPanel } from './settings';
 import { registerTools, unregisterTools } from './function-tool';
 import { initLinkEditorObserver, destroyObserver, injectLinkButtons } from './link-editor';
+import { resolveLinks } from './link-parser';
 
 let initialized = false;
 
@@ -23,7 +24,7 @@ async function init(): Promise<void> {
     }
 
     // 3. If extension is disabled, skip activation of features
-    if (getSettings().disableExtension) {
+    if (!getSettings().enableExtension) {
         initialized = true;
         console.log(`[${MODULE_NAME}] Extension initialized (disabled)`);
         return;
@@ -43,17 +44,23 @@ async function init(): Promise<void> {
         console.warn(`[${MODULE_NAME}] Could not init link editor observer`, e);
     }
 
-    // 6. Hardcore mode: strip non-constant entries during world info scan
+    // 6. Modify activated lore entries during scan
     if (ctx.eventSource) {
         ctx.eventSource.on(ctx.event_types.WORLDINFO_SCAN_DONE, (args: {
-            allActivatedEntries: Set<{ constant?: boolean }>;
+            activated?: { entries?: Map<string, { constant?: boolean; content?: string }> };
         }) => {
-            if (!getSettings().hardcoreMode) return;
-            const allSet = args?.allActivatedEntries;
-            if (!(allSet instanceof Set)) return;
-            for (const entry of allSet) {
-                if (!entry.constant) {
-                    allSet.delete(entry);
+            const settings = getSettings();
+            if (!settings.hardcoreMode && !settings.stripLinksFromPrompt) return;
+            const allSet = args?.activated?.entries;
+            if (!(allSet instanceof Map)) return;
+            for (const [key,entry] of allSet) {
+                // Strip [text](ID:n) links leaving only display text
+                if (settings.stripLinksFromPrompt && typeof entry.content === 'string') {
+                    entry.content = resolveLinks(entry.content);
+                }
+                // Hardcore mode: remove non-constant entries
+                if (settings.hardcoreMode && !entry.constant) {
+                    allSet.delete(key);
                 }
             }
         });
@@ -66,7 +73,7 @@ async function init(): Promise<void> {
         });
         ctx.eventSource.on(ctx.event_types.SETTINGS_UPDATED, () => {
             loadSettings();
-            if (!getSettings().disableExtension) {
+            if (!getSettings().enableExtension) {
                 registerTools();
             } else {
                 unregisterTools();
@@ -90,7 +97,7 @@ export async function onActivate(): Promise<void> {
  */
 export function onEnable(): void {
     loadSettings();
-    if (!getSettings().disableExtension) {
+    if (getSettings().enableExtension) {
         registerTools();
         if (getSettings().toolEnabled) {
             initLinkEditorObserver();

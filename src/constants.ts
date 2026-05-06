@@ -15,7 +15,7 @@ export const SELECTORS = {
 } as const;
 
 export const DEFAULT_SETTINGS = Object.freeze({
-    disableExtension: false,
+    enableExtension: true,
     hardcoreMode: false,
     toolEnabled: true,
     searchToolEnabled: true,
