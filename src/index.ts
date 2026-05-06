@@ -15,29 +15,49 @@ async function init(): Promise<void> {
     // 1. Load settings with defaults
     loadSettings();
 
-    // 2. Render settings panel in Extensions settings
+    // 2. Render settings panel (always available regardless of disable state)
     try {
         await renderSettingsPanel();
     } catch (e) {
         console.warn(`[${MODULE_NAME}] Could not render settings panel`, e);
     }
 
-    // 3. Register the function tool
+    // 3. If extension is disabled, skip activation of features
+    if (getSettings().disableExtension) {
+        initialized = true;
+        console.log(`[${MODULE_NAME}] Extension initialized (disabled)`);
+        return;
+    }
+
+    // 4. Register function tools
     try {
         registerTools();
     } catch (e) {
-        console.warn(`[${MODULE_NAME}] Could not register function tool`, e);
+        console.warn(`[${MODULE_NAME}] Could not register function tools`, e);
     }
 
-    // 4. Set up editor link button injection (delayed until editor is in DOM)
+    // 5. Set up editor link button injection
     try {
         initLinkEditorObserver();
     } catch (e) {
         console.warn(`[${MODULE_NAME}] Could not init link editor observer`, e);
     }
 
-    // 5. Listen for world info events to re-inject editor buttons
+    // 6. Hardcore mode: strip non-constant entries during world info scan
     if (ctx.eventSource) {
+        ctx.eventSource.on(ctx.event_types.WORLDINFO_SCAN_DONE, (args: {
+            allActivatedEntries: Set<{ constant?: boolean }>;
+        }) => {
+            if (!getSettings().hardcoreMode) return;
+            const allSet = args?.allActivatedEntries;
+            if (!(allSet instanceof Set)) return;
+            for (const entry of allSet) {
+                if (!entry.constant) {
+                    allSet.delete(entry);
+                }
+            }
+        });
+
         ctx.eventSource.on(ctx.event_types.WORLDINFO_UPDATED, () => {
             injectLinkButtons();
         });
@@ -46,7 +66,11 @@ async function init(): Promise<void> {
         });
         ctx.eventSource.on(ctx.event_types.SETTINGS_UPDATED, () => {
             loadSettings();
-            registerTools();
+            if (!getSettings().disableExtension) {
+                registerTools();
+            } else {
+                unregisterTools();
+            }
         });
     }
 
@@ -66,9 +90,11 @@ export async function onActivate(): Promise<void> {
  */
 export function onEnable(): void {
     loadSettings();
-    registerTools();
-    if (getSettings().toolEnabled) {
-        initLinkEditorObserver();
+    if (!getSettings().disableExtension) {
+        registerTools();
+        if (getSettings().toolEnabled) {
+            initLinkEditorObserver();
+        }
     }
     console.log(`[${MODULE_NAME}] Extension enabled`);
 }

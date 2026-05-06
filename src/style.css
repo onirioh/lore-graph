@@ -107,6 +107,12 @@
 }
 
 /* Settings panel */
+.lg-settings-divider {
+    border: none;
+    border-top: 1px solid var(--SmartThemeBorderColor, #333);
+    margin: 10px 0;
+}
+
 .lore-graph-settings .inline-drawer-content label {
     display: flex;
     align-items: center;

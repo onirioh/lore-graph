@@ -5,6 +5,18 @@
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
         <div class="inline-drawer-content">
+            <label class="checkbox_label" for="lg_disable_extension">
+                <input id="lg_disable_extension" type="checkbox" {{#if disableExtension}}checked{{/if}} />
+                <span>Disable extension (overrides everything below)</span>
+            </label>
+
+            <label class="checkbox_label" for="lg_hardcore_mode">
+                <input id="lg_hardcore_mode" type="checkbox" {{#if hardcoreMode}}checked{{/if}} />
+                <span>Only activate constant lore entries (ignore all keywords)</span>
+            </label>
+
+            <hr class="lg-settings-divider" />
+
             <label class="checkbox_label" for="lg_tool_enabled">
                 <input id="lg_tool_enabled" type="checkbox" {{#if toolEnabled}}checked{{/if}} />
                 <span>Enable lookup_lore function tool</span>

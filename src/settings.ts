@@ -36,6 +36,8 @@ export async function renderSettingsPanel(): Promise<void> {
         'lore-graph',
         'settings',
         {
+            disableExtension: settings.disableExtension,
+            hardcoreMode: settings.hardcoreMode,
             toolEnabled: settings.toolEnabled,
             searchToolEnabled: settings.searchToolEnabled,
             crossBookLookup: settings.crossBookLookup,
@@ -64,7 +66,22 @@ function reregisterTools(): void {
     import('./function-tool').then(m => m.registerTools());
 }
 
+function syncExtensionState(): void {
+    if (settings.disableExtension) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { unregisterFunctionTool } = (globalThis as any).SillyTavern.getContext();
+        unregisterFunctionTool(TOOL_NAME);
+        unregisterFunctionTool(SEARCH_TOOL_NAME);
+        import('./link-editor').then(m => m.destroyObserver());
+    } else {
+        reregisterTools();
+        import('./link-editor').then(m => m.initLinkEditorObserver());
+    }
+}
+
 function bindSettingsUI(): void {
+    const disableCheckbox = document.getElementById('lg_disable_extension') as HTMLInputElement | null;
+    const hardcoreCheckbox = document.getElementById('lg_hardcore_mode') as HTMLInputElement | null;
     const toolCheckbox = document.getElementById('lg_tool_enabled') as HTMLInputElement | null;
     const searchToolCheckbox = document.getElementById('lg_search_tool_enabled') as HTMLInputElement | null;
     const crossBookCheckbox = document.getElementById('lg_cross_book') as HTMLInputElement | null;
@@ -74,8 +91,16 @@ function bindSettingsUI(): void {
     const lookupDescTextarea = document.getElementById('lg_lookup_description') as HTMLTextAreaElement | null;
     const searchDescTextarea = document.getElementById('lg_search_description') as HTMLTextAreaElement | null;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { unregisterFunctionTool } = (globalThis as any).SillyTavern.getContext();
+    disableCheckbox?.addEventListener('change', () => {
+        settings.disableExtension = disableCheckbox.checked;
+        saveSettings();
+        syncExtensionState();
+    });
+
+    hardcoreCheckbox?.addEventListener('change', () => {
+        settings.hardcoreMode = hardcoreCheckbox.checked;
+        saveSettings();
+    });
 
     toolCheckbox?.addEventListener('change', () => {
         settings.toolEnabled = toolCheckbox.checked;
