@@ -80,7 +80,7 @@ function syncExtensionState(): void {
 }
 
 function bindSettingsUI(): void {
-    const disableCheckbox = document.getElementById('lg_enable_extension') as HTMLInputElement | null;
+    const enableCheckbox = document.getElementById('lg_enable_extension') as HTMLInputElement | null;
     const hardcoreCheckbox = document.getElementById('lg_hardcore_mode') as HTMLInputElement | null;
     const toolCheckbox = document.getElementById('lg_tool_enabled') as HTMLInputElement | null;
     const searchToolCheckbox = document.getElementById('lg_search_tool_enabled') as HTMLInputElement | null;
@@ -91,8 +91,8 @@ function bindSettingsUI(): void {
     const lookupDescTextarea = document.getElementById('lg_lookup_description') as HTMLTextAreaElement | null;
     const searchDescTextarea = document.getElementById('lg_search_description') as HTMLTextAreaElement | null;
 
-    disableCheckbox?.addEventListener('change', () => {
-        settings.enableExtension = disableCheckbox.checked;
+    enableCheckbox?.addEventListener('change', () => {
+        settings.enableExtension = enableCheckbox.checked;
         saveSettings();
         syncExtensionState();
     });

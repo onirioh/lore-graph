@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"c:\\\\Users\\\\helius\\\\SillyTavern\\\\public\\\\scripts\\\\\" | head -30)",
+      "Read(//c/Users/helius/SillyTavern/public/**)"
+    ]
+  }
+}

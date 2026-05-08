@@ -73,7 +73,7 @@ async function init(): Promise<void> {
         });
         ctx.eventSource.on(ctx.event_types.SETTINGS_UPDATED, () => {
             loadSettings();
-            if (!getSettings().enableExtension) {
+            if (getSettings().enableExtension) {
                 registerTools();
             } else {
                 unregisterTools();
