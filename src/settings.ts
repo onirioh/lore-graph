@@ -42,6 +42,9 @@ export async function renderSettingsPanel(): Promise<void> {
             searchToolEnabled: settings.searchToolEnabled,
             stripLinksFromPrompt: settings.stripLinksFromPrompt,
             stealth: settings.stealth,
+            persistToolActivations: settings.persistToolActivations,
+            toolActivationTtl: settings.toolActivationTtl,
+            showActivationBlocks: settings.showActivationBlocks,
             lookupToolDescription: settings.lookupToolDescription,
             searchToolDescription: settings.searchToolDescription,
         },
@@ -72,6 +75,8 @@ function syncExtensionState(): void {
         unregisterFunctionTool(TOOL_NAME);
         unregisterFunctionTool(SEARCH_TOOL_NAME);
         import('./link-editor').then(m => m.destroyObserver());
+        import('./activation-manager').then(m => m.clearState());
+        document.querySelectorAll('.lg-activation-bar').forEach(el => el.remove());
     } else {
         reregisterTools();
         import('./link-editor').then(m => m.initLinkEditorObserver());
@@ -121,6 +126,33 @@ function bindSettingsUI(): void {
         settings.stealth = stealthCheckbox.checked;
         saveSettings();
         reregisterTools();
+        document.querySelectorAll('.lg-activation-bar').forEach(el => {
+            (el as HTMLElement).style.display = settings.stealth ? 'none' : '';
+        });
+    });
+
+    const persistCheckbox = document.getElementById('lg_persist_activations') as HTMLInputElement | null;
+    const showBlocksCheckbox = document.getElementById('lg_show_activation_blocks') as HTMLInputElement | null;
+    const ttlInput = document.getElementById('lg_ttl') as HTMLInputElement | null;
+
+    persistCheckbox?.addEventListener('change', () => {
+        settings.persistToolActivations = persistCheckbox.checked;
+        saveSettings();
+    });
+
+    showBlocksCheckbox?.addEventListener('change', () => {
+        settings.showActivationBlocks = showBlocksCheckbox.checked;
+        saveSettings();
+        document.querySelectorAll('.lg-activation-bar').forEach(el => {
+            (el as HTMLElement).style.display = settings.showActivationBlocks ? '' : 'none';
+        });
+    });
+
+    ttlInput?.addEventListener('change', () => {
+        const val = parseInt(ttlInput.value, 10);
+        settings.toolActivationTtl = isNaN(val) || val < 1 ? 1 : val;
+        ttlInput.value = String(settings.toolActivationTtl);
+        saveSettings();
     });
 
     lookupDescTextarea?.addEventListener('change', () => {

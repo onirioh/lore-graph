@@ -22,6 +22,9 @@ export const DEFAULT_SETTINGS = Object.freeze({
     searchToolEnabled: true,
     stealth: false,
     stripLinksFromPrompt: false,
+    persistToolActivations: true,
+    toolActivationTtl: 5,
+    showActivationBlocks: true,
     lookupToolDescription: [
         'Look up additional lore information by entry ID and world name.',
         'When you see text in lore or world info containing references like [Name](ID:123;WORLD:BookName),',

@@ -3,6 +3,7 @@ import { getSettings } from './settings';
 import { findEntriesByLookups, searchEntriesByTerms } from './link-parser';
 import { type LookupResult } from './types';
 import { type SearchResult } from './link-parser';
+import { queuePendingActivations } from './activation-manager';
 
 let lookupRegistered = false;
 let searchRegistered = false;
@@ -76,6 +77,15 @@ function registerLookupTool(): void {
             }
 
             const results = await findEntriesByLookups(lookups);
+            const uidToWorld = new Map(lookups.map(l => [l.id, l.world]));
+            queuePendingActivations(
+                results.map(r => ({
+                    uid: r.uid,
+                    world: uidToWorld.get(r.uid) || '',
+                    title: r.title,
+                    content: r.content,
+                })),
+            );
             return formatLookupResults(results);
         },
         formatMessage: ({ lookups }: { lookups?: Array<{ id: number; world: string }> }) => {
@@ -128,6 +138,14 @@ function registerSearchTool(): void {
             }
 
             const results = await searchEntriesByTerms(terms);
+            queuePendingActivations(
+                results.map(r => ({
+                    uid: r.uid,
+                    world: r.world,
+                    title: r.title,
+                    content: r.content,
+                })),
+            );
             return formatSearchResults(results);
         },
         formatMessage: ({ terms }: { terms?: string[] }) => {

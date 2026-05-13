@@ -154,3 +154,88 @@
     padding: 2px 8px;
     font-size: 11px;
 }
+
+/* Activation bar in chat */
+.lg-activation-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 10px;
+    margin: 4px 0;
+    background: var(--SmartThemeBlurTintColor, rgba(0, 0, 0, 0.3));
+    border: 1px solid var(--SmartThemeBorderColor, #444);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.lg-activation-entry {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: var(--SmartThemeBodyColor, #ddd);
+    color: var(--SmartThemeBlurTintColor, #222);
+    border-radius: 4px;
+}
+
+.lg-activation-entry.lg-manually-deactivated {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+.lg-entry-world {
+    opacity: 0.7;
+    font-size: 10px;
+}
+
+.lg-block-ttl {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 2px 4px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.lg-ttl-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 3px;
+    font-size: 12px;
+    font-weight: bold;
+    color: inherit;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+    line-height: 1;
+}
+
+.lg-ttl-btn:hover {
+    opacity: 1;
+}
+
+.lg-ttl-text {
+    padding: 0 2px;
+}
+
+.lg-deactivate-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 1px 3px;
+    font-size: 11px;
+    color: inherit;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+
+.lg-deactivate-btn:hover {
+    opacity: 1;
+}
+
+.lg-activation-hidden {
+    display: none;
+}

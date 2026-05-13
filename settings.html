@@ -47,6 +47,23 @@
                 <input id="lg_stealth" type="checkbox" {{#if stealth}}checked{{/if}} />
                 <span>Hide tool call results from chat</span>
             </label>
+
+            <hr class="lg-settings-divider" />
+
+            <label class="checkbox_label" for="lg_persist_activations">
+                <input id="lg_persist_activations" type="checkbox" {{#if persistToolActivations}}checked{{/if}} />
+                <span>Keep tool-looked-up entries active for multiple turns</span>
+            </label>
+
+            <label class="checkbox_label" for="lg_show_activation_blocks">
+                <input id="lg_show_activation_blocks" type="checkbox" {{#if showActivationBlocks}}checked{{/if}} />
+                <span>Show activation management UI in chat</span>
+            </label>
+
+            <label for="lg_ttl" style="display: flex; align-items: center; gap: 8px;">
+                <span>Activation duration (turns):</span>
+                <input id="lg_ttl" type="number" min="1" max="50" value="{{toolActivationTtl}}" style="width: 60px" />
+            </label>
         </div>
     </div>
 </div>
