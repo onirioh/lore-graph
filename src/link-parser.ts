@@ -1,6 +1,5 @@
 import { LINK_PATTERN } from './constants';
-import { type LinkMatch, type LookupResult } from './types';
-import { getSettings } from './settings';
+import { type LinkMatch, type LookupResult, type WorldLookupItem } from './types';
 
 /**
  * Parse all [text](ID:n) links from a content string.
@@ -20,14 +19,12 @@ export function parseLinks(content: string): LinkMatch[] {
 }
 
 /**
- * Replace [text](ID:n) with just "text" if stripping is enabled,
- * otherwise leave content unchanged.
+ * Transform all [text](ID:n) links to [text](ID:n;WORLD:world) format.
  */
-export function resolveLinks(content: string): string {
-    const s = getSettings();
-    if (!s.stripLinksFromPrompt) return content;
+export function transformLinksToWorldAware(content: string, world: string): string {
     LINK_PATTERN.lastIndex = 0;
-    return content.replace(LINK_PATTERN, (_, text: string) => text);
+    return content.replace(LINK_PATTERN, (_, text: string, uid: string) =>
+        `[${text}](ID:${uid};WORLD:${world})`);
 }
 
 /**
@@ -108,19 +105,15 @@ async function getActiveLorebookNames(): Promise<string[]> {
 }
 
 /**
- * Search all active lorebooks for an entry with the given UID.
+ * Look up an entry by UID in a specific lorebook.
  * Returns the entry content and title if found, null otherwise.
  */
 export async function findEntryByUid(
     uid: number,
-    crossBook: boolean,
-    sourceBookName?: string,
+    world: string,
 ): Promise<LookupResult | null> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ctx = (globalThis as any).SillyTavern.getContext();
-
-    // Resolve loadWorldInfo from world-info.js
-    // loadWorldInfo is available via getContext() directly
     const loadWorldInfo: (name: string) => Promise<{
         entries: Record<number, { uid: number; comment: string; content: string }>;
     } | undefined> = ctx.loadWorldInfo;
@@ -130,57 +123,33 @@ export async function findEntryByUid(
         return null;
     }
 
-    let bookNames: string[];
-
-    if (crossBook) {
-        bookNames = await getActiveLorebookNames();
-        // If a source book is specified, ensure it's first (priority)
-        if (sourceBookName) {
-            bookNames = [sourceBookName, ...bookNames.filter(n => n !== sourceBookName)];
+    try {
+        const data = await loadWorldInfo(world);
+        if (!data?.entries) return null;
+        const entry = data.entries[uid];
+        if (entry) {
+            return {
+                uid: entry.uid,
+                title: entry.comment || '',
+                content: entry.content || '',
+            };
         }
-    } else if (sourceBookName) {
-        bookNames = [sourceBookName];
-    } else {
-        // No source book and crossBook is disabled; can't resolve
-        return null;
-    }
-
-    // Deduplicate while preserving order
-    const seen = new Set<string>();
-    bookNames = bookNames.filter(n => !seen.has(n) && seen.add(n));
-
-    for (const name of bookNames) {
-        try {
-            const data = await loadWorldInfo(name);
-            if (!data?.entries) continue;
-
-            // entries is keyed by numeric UID as strings
-            const entry = data.entries[uid];
-            if (entry) {
-                return {
-                    uid: entry.uid,
-                    title: entry.comment || '',
-                    content: entry.content || '',
-                };
-            }
-        } catch {
-            // Book not found or failed to load; skip
-        }
+    } catch {
+        // Book not found or failed to load
     }
 
     return null;
 }
 
 /**
- * Search active lorebooks and return all found entries for the given UIDs.
+ * Look up entries by {id, world} pairs.
  */
-export async function findEntriesByUids(
-    uids: number[],
-    crossBook: boolean,
+export async function findEntriesByLookups(
+    lookups: WorldLookupItem[],
 ): Promise<LookupResult[]> {
     const results: LookupResult[] = [];
-    for (const uid of uids) {
-        const entry = await findEntryByUid(uid, crossBook);
+    for (const { id, world } of lookups) {
+        const entry = await findEntryByUid(id, world);
         if (entry) {
             results.push(entry);
         }
@@ -203,7 +172,6 @@ export interface SearchResult extends LookupResult {
  */
 export async function searchEntriesByTerms(
     terms: string[],
-    crossBook: boolean,
 ): Promise<SearchResult[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ctx = (globalThis as any).SillyTavern.getContext();
@@ -213,10 +181,7 @@ export async function searchEntriesByTerms(
 
     if (!loadWorldInfo) return [];
 
-    const bookNames = crossBook
-        ? await getActiveLorebookNames()
-        : [];
-
+    const bookNames = await getActiveLorebookNames();
     if (bookNames.length === 0) return [];
 
     const lowerTerms = terms.map(t => t.toLowerCase());

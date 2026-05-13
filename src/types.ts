@@ -5,7 +5,6 @@ export interface LoreGraphSettings {
     searchToolEnabled: boolean;
     stealth: boolean;
     stripLinksFromPrompt: boolean;
-    crossBookLookup: boolean;
     lookupToolDescription: string;
     searchToolDescription: string;
 }
@@ -22,6 +21,11 @@ export interface ActiveLoreEntry {
     comment: string;
     content: string;
     key: string[];
+}
+
+export interface WorldLookupItem {
+    id: number;
+    world: string;
 }
 
 export interface LookupResult {

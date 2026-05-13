@@ -1,4 +1,4 @@
-import { SELECTORS, LINK_PATTERN } from './constants';
+import { SELECTORS, LINK_PATTERN, LINK_WORLD_PATTERN } from './constants';
 
 let observer: MutationObserver | null = null;
 
@@ -84,10 +84,10 @@ export function injectExportCleanButton(): void {
         for (const entry of Object.values(clean.entries) as Array<{ content?: string }>) {
             if (entry.content) {
                 LINK_PATTERN.lastIndex = 0;
-                entry.content = entry.content.replace(
-                    LINK_PATTERN,
-                    (_, text: string) => text,
-                );
+                LINK_WORLD_PATTERN.lastIndex = 0;
+                entry.content = entry.content
+                    .replace(LINK_WORLD_PATTERN, '$1')
+                    .replace(LINK_PATTERN, '$1');
             }
         }
 

@@ -1,6 +1,6 @@
 import { TOOL_NAME, SEARCH_TOOL_NAME } from './constants';
 import { getSettings } from './settings';
-import { findEntriesByUids, searchEntriesByTerms } from './link-parser';
+import { findEntriesByLookups, searchEntriesByTerms } from './link-parser';
 import { type LookupResult } from './types';
 import { type SearchResult } from './link-parser';
 
@@ -53,25 +53,33 @@ function registerLookupTool(): void {
             $schema: 'http://json-schema.org/draft-04/schema#',
             type: 'object',
             properties: {
-                ids: {
+                lookups: {
                     type: 'array',
-                    items: { type: 'integer' },
-                    description: 'Array of lore entry UIDs to look up, e.g. [1, 5, 12]',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            id: { type: 'integer', description: 'Numeric UID of the lore entry' },
+                            world: { type: 'string', description: 'Lorebook/world name containing this entry' },
+                        },
+                        required: ['id', 'world'],
+                    },
+                    description:
+                        'Array of {id, world} lookups, e.g. [{"id":1,"world":"MyWorld"},{"id":5,"world":"OtherWorld"}]',
                 },
             },
-            required: ['ids'],
+            required: ['lookups'],
         }),
-        action: async (args: { ids?: number[] }) => {
-            const ids = args?.ids;
-            if (!Array.isArray(ids) || ids.length === 0) {
-                return 'Error: No IDs provided. Please provide an array of numeric IDs.';
+        action: async (args: { lookups?: Array<{ id: number; world: string }> }) => {
+            const lookups = args?.lookups;
+            if (!Array.isArray(lookups) || lookups.length === 0) {
+                return 'Error: No lookups provided. Please provide an array of {id, world} objects.';
             }
 
-            const results = await findEntriesByUids(ids, getSettings().crossBookLookup);
+            const results = await findEntriesByLookups(lookups);
             return formatLookupResults(results);
         },
-        formatMessage: ({ ids }: { ids?: number[] }) => {
-            const count = Array.isArray(ids) ? ids.length : 1;
+        formatMessage: ({ lookups }: { lookups?: Array<{ id: number; world: string }> }) => {
+            const count = Array.isArray(lookups) ? lookups.length : 1;
             return `Looking up ${count} lore entr${count === 1 ? 'y' : 'ies'}...`;
         },
         shouldRegister: () => getSettings().toolEnabled,
@@ -119,7 +127,7 @@ function registerSearchTool(): void {
                 return 'Error: No search terms provided. Please provide an array of strings.';
             }
 
-            const results = await searchEntriesByTerms(terms, getSettings().crossBookLookup);
+            const results = await searchEntriesByTerms(terms);
             return formatSearchResults(results);
         },
         formatMessage: ({ terms }: { terms?: string[] }) => {

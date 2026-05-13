@@ -40,7 +40,6 @@ export async function renderSettingsPanel(): Promise<void> {
             hardcoreMode: settings.hardcoreMode,
             toolEnabled: settings.toolEnabled,
             searchToolEnabled: settings.searchToolEnabled,
-            crossBookLookup: settings.crossBookLookup,
             stripLinksFromPrompt: settings.stripLinksFromPrompt,
             stealth: settings.stealth,
             lookupToolDescription: settings.lookupToolDescription,
@@ -84,7 +83,6 @@ function bindSettingsUI(): void {
     const hardcoreCheckbox = document.getElementById('lg_hardcore_mode') as HTMLInputElement | null;
     const toolCheckbox = document.getElementById('lg_tool_enabled') as HTMLInputElement | null;
     const searchToolCheckbox = document.getElementById('lg_search_tool_enabled') as HTMLInputElement | null;
-    const crossBookCheckbox = document.getElementById('lg_cross_book') as HTMLInputElement | null;
     const stripLinksCheckbox = document.getElementById('lg_strip_links') as HTMLInputElement | null;
     const stealthCheckbox = document.getElementById('lg_stealth') as HTMLInputElement | null;
 
@@ -112,11 +110,6 @@ function bindSettingsUI(): void {
         settings.searchToolEnabled = searchToolCheckbox.checked;
         saveSettings();
         reregisterTools();
-    });
-
-    crossBookCheckbox?.addEventListener('change', () => {
-        settings.crossBookLookup = crossBookCheckbox.checked;
-        saveSettings();
     });
 
     stripLinksCheckbox?.addEventListener('change', () => {

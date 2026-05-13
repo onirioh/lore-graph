@@ -12,15 +12,17 @@ Currently, lorebook (world info) entries are triggered and added to the context 
 
 ### Project Idea:
 
-Lorebook entries can contain `[display text](ID:uid)` hyperlinks to other entries from the same lorebook. The AI sees these links in prompt-injected lore and can call `lookup_lore` / `search_lore` function tools to retrieve full entry content on demand. A "Create Link" button in the lorebook editor lets users convert selected text into links via a popup picker.
+Lorebook entries can contain `[display text](ID:uid)` hyperlinks to other entries from the same lorebook. In the editor, links are stored in this short format. When entries are injected into the AI prompt, links are automatically transformed to `[text](ID:uid;WORLD:worldname)` so the AI knows which lorebook each linked entry belongs to. The AI can then call `lookup_lore` / `search_lore` function tools to retrieve full entry content on demand. A "Create Link" button in the lorebook editor lets users convert selected text into links via a popup picker.
 
 ---
-Lucas is a 19 year old boy, first son of [Eldric](ID:001). 
+Editor: Lucas is a 19 year old boy, first son of [Eldric](ID:001).
+In context: Lucas is a 19 year old boy, first son of [Eldric](ID:001;WORLD:Characters).
 […]
-He learned [Fire Magic](ID:096) from the wizard [Raul](ID:068)
+Editor: He learned [Fire Magic](ID:096) from the wizard [Raul](ID:068)
+In context: He learned [Fire Magic](ID:096;WORLD:Characters) from the wizard [Raul](ID:068;WORLD:Characters)
 ---
 
-These IDs point to other lorebook entries (within the same lorebook) that the AI can query during generation by using a tool call. This lets the AI discover related facts intelligently. It can avoid bringing irrelevant information into context or do a deep dive into the lore if necessary.
+These links point to other lorebook entries within the same lorebook. This lets the AI discover related facts intelligently. It can avoid bringing irrelevant information into context or do a deep dive into the lore if necessary.
 
 This extension must work alongside the current lorebook functionality. Constant entries must always be activated regardless, and there has to be an option for entries to also be injected the old way, by keyword matching.
 
@@ -49,7 +51,7 @@ src/
   types.ts             — TypeScript interfaces (LoreGraphSettings, LinkMatch, LookupResult, etc.)
   settings.ts          — Settings load/save, settings panel rendering, UI bindings
   function-tool.ts     — lookup_lore + search_lore function tool registration
-  link-parser.ts       — Parse [text](ID:n) from content, resolve UIDs across lorebooks, term search
+  link-parser.ts       — Parse links, transform to world-aware format, resolve UIDs by world, term search
   link-editor.ts       — DOM injection: "Create Link" button, searchable picker popup, export-clean button
   style.css            — All extension styles
   html.d.ts            — Module declaration for html-loader imports
@@ -70,17 +72,25 @@ Output is `dist/index.js` (ES module, minified). The manifest points `js` to `di
 
 ### Link format
 
+**Editor format** (stored in lorebook data):
 ```
 [Text](ID:001)
 ```
+Regex `\[([^\]]+)\]\(ID:(\d+)\)` — matched by `LINK_PATTERN`.
 
-Regex `\[([^\]]+)\]\(ID:(\d+)\)` — parsed by `link-parser.ts`.
+**Context format** (injected into AI prompts, transformed from editor format):
+```
+[Text](ID:001;WORLD:MyWorld)
+```
+Regex `\[([^\]]+)\]\(ID:(\d+);WORLD:([^;)]+)\)` — matched by `LINK_WORLD_PATTERN`.
+
+Transformation happens in `WORLDINFO_SCAN_DONE` handler via `transformLinksToWorldAware()`. The world name is extracted from the activated entry's Map key (`"world.uid"` → split on last `.`). Links are always intra-book by default — the world is the containing entry's own lorebook.
 
 ### Function tools
 
 Both registered via `SillyTavern.getContext().registerFunctionTool()`:
-- **`lookup_lore`** — batch lookup by numeric UIDs (`ids: integer[]`). Searches all active lorebooks.
-- **`search_lore`** — exact match search by term (`terms: string[]`). Case-insensitive match against entry `comment` (title) and `key` (activation keywords).
+- **`lookup_lore`** — batch lookup by `{id, world}` pairs (`lookups: Array<{id: integer, world: string}>`). Looks up each entry in its specified lorebook directly.
+- **`search_lore`** — exact match search by term (`terms: string[]`). Case-insensitive exact match against entry `comment` (title) and `key` (activation keywords). Searches all active lorebooks.
 
 Both respect `shouldRegister` and `stealth` from settings. Descriptions are editable in settings.
 
@@ -99,7 +109,8 @@ The link picker popup uses `Popup` class. Before showing the popup, `change` eve
 ### Prompt interception
 
 The extension listens to `WORLDINFO_SCAN_DONE` event to modify activated entries before the prompt is built:
-- If `stripLinksFromPrompt` is on: replaces `[text](ID:n)` with `text` in each entry's content
+- **Default**: transforms `[text](ID:n)` → `[text](ID:n;WORLD:world)` for all activated entries, using each entry's own lorebook name (extracted from the Map key `"world_name.uid"` via `lastIndexOf('.')`)
+- If `stripLinksFromPrompt` is on: strips both `[text](ID:n;WORLD:world)` and `[text](ID:n)` formats, leaving only display text
 - If `hardcoreMode` is on: removes non-constant entries from the activated set
 
 ## Gotchas discovered
@@ -135,8 +146,7 @@ Must set `output.library.type: 'module'` and `experiments.outputModule: true` in
 | `toolEnabled` | boolean | true | Enable lookup_lore tool |
 | `searchToolEnabled` | boolean | true | Enable search_lore tool |
 | `stealth` | boolean | false | Hide tool call results from chat |
-| `stripLinksFromPrompt` | boolean | false | Replace [text](ID:n) with just text in prompts |
-| `crossBookLookup` | boolean | true | Search all active lorebooks (not just source book) |
+| `stripLinksFromPrompt` | boolean | false | Strip all link markup from prompts (show only text) |
 | `lookupToolDescription` | string | (see constants.ts) | Custom description for lookup_lore |
 | `searchToolDescription` | string | (see constants.ts) | Custom description for search_lore |
 

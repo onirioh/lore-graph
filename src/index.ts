@@ -1,9 +1,9 @@
 import './style.css';
-import { MODULE_NAME } from './constants';
+import { MODULE_NAME, LINK_PATTERN, LINK_WORLD_PATTERN } from './constants';
 import { loadSettings, getSettings, renderSettingsPanel } from './settings';
 import { registerTools, unregisterTools } from './function-tool';
 import { initLinkEditorObserver, destroyObserver, injectLinkButtons } from './link-editor';
-import { resolveLinks } from './link-parser';
+import { transformLinksToWorldAware } from './link-parser';
 
 let initialized = false;
 
@@ -50,14 +50,25 @@ async function init(): Promise<void> {
             activated?: { entries?: Map<string, { constant?: boolean; content?: string }> };
         }) => {
             const settings = getSettings();
-            if (!settings.hardcoreMode && !settings.stripLinksFromPrompt) return;
             const allSet = args?.activated?.entries;
             if (!(allSet instanceof Map)) return;
-            for (const [key,entry] of allSet) {
-                // Strip [text](ID:n) links leaving only display text
-                if (settings.stripLinksFromPrompt && typeof entry.content === 'string') {
-                    entry.content = resolveLinks(entry.content);
+            for (const [key, entry] of allSet) {
+                if (typeof entry.content !== 'string') continue;
+
+                // Transform [text](ID:n) to [text](ID:n;WORLD:world) for AI context
+                if (!settings.stripLinksFromPrompt) {
+                    const lastDot = key.lastIndexOf('.');
+                    const sourceWorld = lastDot >= 0 ? key.substring(0, lastDot) : key;
+                    entry.content = transformLinksToWorldAware(entry.content, sourceWorld);
+                } else {
+                    // Strip links: remove both old and world-aware link formats
+                    LINK_PATTERN.lastIndex = 0;
+                    LINK_WORLD_PATTERN.lastIndex = 0;
+                    entry.content = entry.content
+                        .replace(LINK_WORLD_PATTERN, '$1')
+                        .replace(LINK_PATTERN, '$1');
                 }
+
                 // Hardcore mode: remove non-constant entries
                 if (settings.hardcoreMode && !entry.constant) {
                     allSet.delete(key);
